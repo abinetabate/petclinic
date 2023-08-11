@@ -84,11 +84,6 @@ class OwnerController {
 		return "owners/findOwners";
 	}
 
-	@GetMapping("/owners/oups2")
-	public void triggerException2() {
-		System.out.println("triggerException2");
-	}
-
 	@GetMapping("/owners")
 	public String processFindForm(@RequestParam(defaultValue = "1") int page, Owner owner, BindingResult result,
 			Model model) {
