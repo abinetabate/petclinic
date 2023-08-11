@@ -1,0 +1,36 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: petclinic
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: petclinic
+  template:
+    metadata:
+      labels:
+        app: petclinic
+    spec:
+      containers:
+      - name: petclinic
+        image: abinetabate/petclinicmicroservice:v5
+        ports:
+          - containerPort: 8080
+        env:
+          - name: APPLICATIONINSIGHTS_CONNECTION_STRING
+            value: InstrumentationKey=5c97c217-fb45-4433-b459-4a6f269cac48;IngestionEndpoint=https://eastus-8.in.applicationinsights.azure.com/;LiveEndpoint=https://eastus.livediagnostics.monitor.azure.com/
+          - name: APPLICATIONINSIGHTS_ROLE_NAME
+            value: petclinic
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: petclinic
+spec:
+  type: LoadBalancer
+  ports:
+  - port: 80
+    targetPort: 8080
+  selector:
+    app: petclinic
