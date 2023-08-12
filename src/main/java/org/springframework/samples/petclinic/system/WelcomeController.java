@@ -16,6 +16,7 @@
 
 package org.springframework.samples.petclinic.system;
 
+import org.apache.commons.logging.Log;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import java.io.IOException;
@@ -24,160 +25,103 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.Path;
 import java.util.Vector;
+import java.util.logging.Logger;
 import java.util.List;
 import java.util.ArrayList;
 
 @Controller
 class WelcomeController {
 
+	private static List<Object> neverRead = null;
+
+	private final static Logger LOGGER = Logger.getLogger(WelcomeController.class.getName());
+
 	@GetMapping("/")
 	public String welcome() {
-		return "welcome";
-	}
-
-	@GetMapping("/designerpet")
-	public String triggerException2() {
-		System.out.println("Generate Leak Start - designer pet - thread loop class loading");
-		try {
-			ClassLoaderLeakExample myClassLoaderLeakExample = new ClassLoaderLeakExample();
-		}
-		catch (Exception e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+		System.gc();
 		return "welcome";
 	}
 
 	@GetMapping("/rescuepet")
-	public String triggerException3() {
-		System.out.println("Generate Leak Start - rescue pet - vector");
+	public String triggerException4() {
+		LOGGER.setLevel(java.util.logging.Level.INFO);
+		int arrSize = 15;
+		LOGGER.log(java.util.logging.Level.INFO, "Begin - Operation Pet Rescue");
+		LOGGER.log(java.util.logging.Level.INFO, "Total Memory (in bytes): " + Runtime.getRuntime().totalMemory());
+		long memoryConsumed = 0;
 		try {
-			Vector v = new Vector(2144446689);
-			Vector v1 = new Vector(2147444449);
-			Vector v2 = new Vector(2144444566);
+			long[] memoryAllocated = null;
+			for (int i = 0; i < Integer.MAX_VALUE; i++) {
+				memoryAllocated = new long[arrSize];
+				memoryAllocated[0] = 0;
+				memoryConsumed += arrSize * Long.SIZE;
+				LOGGER.log(java.util.logging.Level.INFO, "In Progress - Operation Pet Rescue " + memoryConsumed);
+				arrSize = arrSize * 2;
+				Thread.sleep(500);
+			}
 		}
-		catch (Exception e) {
-			// TODO Auto-generated catch block
+		catch (OutOfMemoryError e) {
+			LOGGER.log(java.util.logging.Level.SEVERE, "Error - Operation Pet Rescue", e);
+			throw e;
+		}
+		catch (InterruptedException e) {
 			e.printStackTrace();
 		}
 
 		return "welcome";
 	}
 
-	public final class ClassLoaderLeakExample {
+	// @GetMapping("/rescuepet")
+	// public String triggerException1() {
+	// System.out.println("Generate Leak Start - designer pet - thread loop class
+	// loading");
+	// LOGGER.setLevel(java.util.logging.Level.INFO);
+	// try {
+	// neverRead = new ArrayList<Object>();
+	// while(true)
+	// {
+	// neverRead.add(new Object());
+	// }
+	// }
+	// catch (OutOfMemoryError e) {
+	// // TODO Auto-generated catch block
+	// LOGGER.log(java.util.logging.Level.SEVERE, "Out of memory error", e);
+	// LOGGER.log(java.util.logging.Level.INFO, "Total Memory (in bytes): " +
+	// Runtime.getRuntime().totalMemory());
+	// LOGGER.log(java.util.logging.Level.INFO, "Free Memory (in bytes): " +
+	// Runtime.getRuntime().freeMemory());
+	// LOGGER.log(java.util.logging.Level.INFO, "Max Memory (in bytes): " +
+	// Runtime.getRuntime().maxMemory());
+	// System.gc();
+	// System.gc();
+	// } finally {
+	// Thread.currentThread().setUncaughtExceptionHandler(new
+	// Thread.UncaughtExceptionHandler()
+	// {
+	// public void uncaughtException(Thread t, Throwable e) {
+	// if (e instanceof OutOfMemoryError) {
+	// e.printStackTrace();
+	// }
+	// }
+	// });
+	// }
+	// return "welcome";
+	// }
 
-		static volatile boolean running = true;
+	// @GetMapping("/rescuepet")
+	// public String triggerException3() {
+	// System.out.println("Generate Leak Start - rescue pet - vector");
+	// try {
+	// Vector v = new Vector(2144446689);
+	// Vector v1 = new Vector(2147444449);
+	// Vector v2 = new Vector(2144444566);
+	// }
+	// catch (Exception e) {
+	// // TODO Auto-generated catch block
+	// e.printStackTrace();
+	// }
 
-		public ClassLoaderLeakExample() throws Exception {
-			running = true;
-			Thread thread = new LongRunningThread();
-			try {
-				thread.start();
-				System.out.println("Running, press any key to stop.");
-				System.in.read();
-			}
-			finally {
-				running = false;
-				thread.join();
-			}
-		}
-
-		/**
-		 * Implementation of the thread. It just calls {@link #loadAndDiscard()} in a
-		 * loop.
-		 */
-		static final class LongRunningThread extends Thread {
-
-			@Override
-			public void run() {
-				while (running) {
-					try {
-						loadAndDiscard();
-					}
-					catch (Throwable ex) {
-						ex.printStackTrace();
-					}
-					try {
-						Thread.sleep(100);
-					}
-					catch (InterruptedException ex) {
-						System.out.println("Caught InterruptedException, shutting down.");
-					}
-				}
-			}
-
-		}
-
-		/**
-		 * A simple ClassLoader implementation that is only able to load one class, the
-		 * LoadedInChildClassLoader class. We have to jump through some hoops here because
-		 * we explicitly want to ensure we get a new class each time (instead of reusing
-		 * the class loaded by the system class loader). If this child class were in a JAR
-		 * file that wasn't part of the system classpath, we wouldn't need this mechanism.
-		 */
-		static final class ChildOnlyClassLoader extends ClassLoader {
-
-			ChildOnlyClassLoader() {
-				super(ClassLoaderLeakExample.class.getClassLoader());
-			}
-
-			@Override
-			protected Class<?> loadClass(String name, boolean resolve) throws ClassNotFoundException {
-				if (!LoadedInChildClassLoader.class.getName().equals(name)) {
-					return super.loadClass(name, resolve);
-				}
-				try {
-					// C:\Users\abinetabate\Desktop\code\petclinic\spring-petclinic\org.springframework.samples.petclinic.system.WelcomeController$ClassLoaderLeakExample$LoadedInChildClassLoader.class
-					Path path = Paths.get("WelcomeController$ClassLoaderLeakExample$LoadedInChildClassLoader.class");
-					byte[] classBytes = Files.readAllBytes(path);
-					Class<?> c = defineClass(name, classBytes, 0, classBytes.length);
-					if (resolve) {
-						resolveClass(c);
-					}
-					return c;
-				}
-				catch (IOException ex) {
-					throw new ClassNotFoundException("Could not load " + name, ex);
-				}
-			}
-
-		}
-
-		/**
-		 * Helper method that constructs a new ClassLoader, loads a single class, and then
-		 * discards any reference to them. Theoretically, there should be no GC impact,
-		 * since no references can escape this method! But in practice this will leak
-		 * memory like a sieve.
-		 */
-		static void loadAndDiscard() throws Exception {
-			ClassLoader childClassLoader = new ChildOnlyClassLoader();
-			Class<?> childClass = Class.forName(LoadedInChildClassLoader.class.getName(), true, childClassLoader);
-			childClass.newInstance();
-			// When this method returns, there will be no way to reference
-			// childClassLoader or childClass at all, but they will still be
-			// rooted for GC purposes!
-		}
-
-		/**
-		 * An innocuous-looking class. Doesn't do anything interesting.
-		 */
-		public static final class LoadedInChildClassLoader {
-
-			// Grab a bunch of bytes. This isn't necessary for the leak, it just
-			// makes the effect visible more quickly.
-			// Note that we're really leaking these bytes, since we're effectively
-			// creating a new instance of this static final field on each iteration!
-			static final byte[] moreBytesToLeak = new byte[1024 * 1024 * 10];
-
-			private static final ThreadLocal<LoadedInChildClassLoader> threadLocal = new ThreadLocal<>();
-
-			public LoadedInChildClassLoader() {
-				// Stash a reference to this class in the ThreadLocal
-				threadLocal.set(this);
-			}
-
-		}
-
-	}
+	// return "welcome";
+	// }
 
 }
