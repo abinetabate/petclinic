@@ -12,6 +12,7 @@ spec:
       labels:
         app: petclinic
     spec:
+      revisionHistoryLimit: 0
       containers:
       - name: petclinic
         image: abinetabate/petclinicmicroservice:v6
