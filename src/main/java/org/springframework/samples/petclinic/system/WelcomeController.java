@@ -17,6 +17,7 @@
 package org.springframework.samples.petclinic.system;
 
 import org.apache.commons.logging.Log;
+import org.checkerframework.checker.units.qual.m;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import java.io.IOException;
@@ -43,26 +44,27 @@ class WelcomeController {
 	}
 
 	@GetMapping("/rescuepet")
-	public String triggerException4() {
+	public String triggerException4() throws OutOfMemoryError, WordContainsException {
 		LOGGER.setLevel(java.util.logging.Level.INFO);
 		int arrSize = 15;
 		LOGGER.log(java.util.logging.Level.INFO, "Begin - Operation Pet Rescue");
-		LOGGER.log(java.util.logging.Level.INFO, "Total Memory (in bytes): " + Runtime.getRuntime().totalMemory());
-		long memoryConsumed = 0;
 		try {
 			long[] memoryAllocated = null;
 			for (int i = 0; i < Integer.MAX_VALUE; i++) {
 				memoryAllocated = new long[arrSize];
 				memoryAllocated[0] = 0;
-				memoryConsumed += arrSize * Long.SIZE;
-				LOGGER.log(java.util.logging.Level.INFO, "In Progress - Operation Pet Rescue " + memoryConsumed);
+				LOGGER.log(java.util.logging.Level.INFO,
+						"In Progress - Operation Pet Rescue " + (memoryAllocated.length * 8));
 				arrSize = arrSize * 2;
 				Thread.sleep(500);
 			}
 		}
 		catch (OutOfMemoryError e) {
 			LOGGER.log(java.util.logging.Level.SEVERE, "Error - Operation Pet Rescue", e);
-			throw e;
+			throw new OutOfMemoryError(e.getMessage());
+			// throw e;
+			// throw new OutOfMemoryError(e.getMessage());
+			// throw new WordContainsException(e);
 		}
 		catch (InterruptedException e) {
 			e.printStackTrace();
@@ -123,5 +125,22 @@ class WelcomeController {
 
 	// return "welcome";
 	// }
+
+}
+
+class WordContainsException extends Exception {
+
+	// Parameterless Constructor
+	public WordContainsException() {
+	}
+
+	// Constructor that accepts a message
+	public WordContainsException(String message) {
+		super(message);
+	}
+
+	public WordContainsException(Throwable cause) {
+		super(cause);
+	}
 
 }
